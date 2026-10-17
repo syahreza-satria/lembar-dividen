@@ -1,26 +1,430 @@
 @import "tailwindcss";
 
+/*
+ * Design system: "Aether - The New Frontier" (design-system.md), tema gelap.
+ * background #050505, teks putih, teks sekunder #A1A1AA, border #27272A, aksen putih.
+ * #F4F4F4 (surface) dipakai untuk kartu terang sebagai titik fokus. Hijau/merah hanya untuk naik/turun.
+ * Inter untuk judul dan isi; JetBrains Mono untuk label, angka, dan metadata.
+ */
 :root {
-  --background: #ffffff;
-  --foreground: #171717;
+  color-scheme: dark;
+  --bg: #050505;
+  --surface: #0c0c0c;
+  --surface-2: #111111;
+  --surface-3: #18181b;
+  --terang: #f4f4f4;
+  --border: #27272a;
+  --border-kuat: #52525b;
+  --teks: #ffffff;
+  --teks-2: #a1a1aa;
+  --aksen: #ffffff;
+  --naik: #4ade80;
+  --turun: #f87171;
+  --peringatan: #facc15;
+  --info: #38bdf8;
 }
 
 @theme inline {
-  --color-background: var(--background);
-  --color-foreground: var(--foreground);
-  --font-sans: var(--font-geist-sans);
-  --font-mono: var(--font-geist-mono);
+  --color-bg: var(--bg);
+  --color-surface: var(--surface);
+  --color-surface-2: var(--surface-2);
+  --color-surface-3: var(--surface-3);
+  --color-terang: var(--terang);
+  --color-garis: var(--border);
+  --color-garis-kuat: var(--border-kuat);
+  --color-teks: var(--teks);
+  --color-teks-2: var(--teks-2);
+  --color-aksen: var(--aksen);
+  --color-naik: var(--naik);
+  --color-turun: var(--turun);
+  --color-peringatan: var(--peringatan);
+  --color-info: var(--info);
+
+  --font-sans: var(--font-inter), system-ui, sans-serif;
+  --font-judul: var(--font-inter), system-ui, sans-serif;
+  --font-mono: var(--font-jbmono), ui-monospace, monospace;
+
+  --radius-sm: 4px;
+  --radius-DEFAULT: 8px;
 }
 
-@media (prefers-color-scheme: dark) {
-  :root {
-    --background: #0a0a0a;
-    --foreground: #ededed;
-  }
+html {
+  background: var(--bg);
+  scroll-padding-top: 8rem;
 }
 
 body {
-  background: var(--background);
-  color: var(--foreground);
-  font-family: Arial, Helvetica, sans-serif;
+  background: var(--bg);
+  color: var(--teks);
+  font-family: var(--font-sans);
+  font-size: 16px;
+  line-height: 1.6;
+  -webkit-font-smoothing: antialiased;
+  overflow-x: hidden;
+}
+
+@layer base {
+  h1,
+  h2,
+  h3,
+  h4 {
+    font-family: var(--font-judul);
+    font-weight: 500;
+    color: var(--teks);
+  }
+
+  a {
+    color: inherit;
+  }
+}
+
+::selection {
+  background: #ffffff;
+  color: #050505;
+}
+
+:focus-visible {
+  outline: 2px solid #ffffff;
+  outline-offset: 3px;
+  border-radius: 4px;
+}
+
+/* Mode Pemula/Pro: atribut data-mode di <html> diset sebelum hydration oleh skrip inline. */
+html:not([data-mode="pro"]) .hanya-pro {
+  display: none !important;
+}
+html[data-mode="pro"] .hanya-pemula {
+  display: none !important;
+}
+
+/* Keadaan awal animasi masuk (hanya saat JS aktif dan gerak tidak dikurangi). GSAP mengambil alih lalu melepas kelas. */
+html.anim [data-reveal] {
+  transform: translateY(110%);
+}
+html.anim [data-label],
+html.anim [data-masuk],
+html.anim #isi > * > *:not([data-kepala]) {
+  opacity: 0;
+}
+
+/* Lapisan ambient di belakang konten: grid tipis + cahaya yang bergerak pelan. */
+.ambient {
+  position: fixed;
+  inset: 0;
+  z-index: 0;
+  overflow: hidden;
+  pointer-events: none;
+}
+.ambient-grid {
+  position: absolute;
+  inset: 0;
+  background-image: linear-gradient(to right, rgba(255, 255, 255, 0.04) 1px, transparent 1px),
+    linear-gradient(to bottom, rgba(255, 255, 255, 0.04) 1px, transparent 1px);
+  background-size: 72px 72px;
+  mask-image: radial-gradient(ellipse 80% 55% at 50% 0%, #000 0%, transparent 75%);
+}
+.ambient-orb {
+  position: absolute;
+  border-radius: 9999px;
+  background: radial-gradient(circle, rgba(255, 255, 255, 0.09), rgba(255, 255, 255, 0) 65%);
+  will-change: transform;
+}
+header.situs,
+main,
+footer {
+  position: relative;
+  z-index: 1;
+}
+
+@layer components {
+  .angka {
+    font-family: var(--font-mono);
+    font-variant-numeric: tabular-nums;
+    letter-spacing: -0.01em;
+  }
+
+  /* Label teknis: JetBrains Mono 12px/600 huruf besar */
+  .label-mono {
+    font-family: var(--font-mono);
+    font-size: 12px;
+    font-weight: 600;
+    line-height: 1.2;
+    letter-spacing: 0.08em;
+    text-transform: uppercase;
+    color: var(--teks-2);
+  }
+
+  /* Judul tampilan: Inter 500, 64px, 1.04 */
+  .tampil {
+    font-size: clamp(2.5rem, 6.4vw, 4rem);
+    line-height: 1.04;
+    font-weight: 500;
+    letter-spacing: 0;
+  }
+  .judul-halaman {
+    font-size: clamp(2.25rem, 4.6vw, 3.5rem);
+    line-height: 1.06;
+    font-weight: 500;
+  }
+  .judul-seksi {
+    font-size: 1.5rem;
+    line-height: 1.2;
+    font-weight: 500;
+  }
+  .teks-pengantar {
+    font-size: 1.125rem;
+    color: var(--teks-2);
+  }
+
+  /* Masked reveal: isi judul naik dari balik topeng */
+  .topeng {
+    display: block;
+    overflow: hidden;
+    padding-bottom: 0.12em;
+    margin-bottom: -0.12em;
+  }
+  .topeng-isi {
+    display: block;
+    will-change: transform;
+  }
+
+  .kartu {
+    background: var(--surface-2);
+    border: 1px solid var(--border);
+    border-radius: 8px;
+  }
+  /* Kartu terang (#F4F4F4): titik fokus. Token teks dibalik di dalamnya. */
+  .kartu-terang {
+    --teks: #050505;
+    --teks-2: #52525b;
+    --border: #d4d4d8;
+    --border-kuat: #a1a1aa;
+    --naik: #15803d;
+    --turun: #b91c1c;
+    background: var(--terang);
+    border: 1px solid var(--terang);
+    border-radius: 8px;
+    color: var(--teks);
+  }
+  .kartu-terang h1,
+  .kartu-terang h2,
+  .kartu-terang h3 {
+    color: #050505;
+  }
+
+  /* Chip/badge: pill, mono huruf besar */
+  .chip {
+    display: inline-flex;
+    align-items: center;
+    gap: 0.25rem;
+    padding: 5px 12px;
+    border-radius: 9999px;
+    font-family: var(--font-mono);
+    font-size: 11px;
+    font-weight: 600;
+    letter-spacing: 0.06em;
+    line-height: 1.3;
+    text-transform: uppercase;
+    border: 1px solid var(--border);
+    background: transparent;
+    color: var(--teks);
+  }
+  .chip-aktif {
+    background: #ffffff;
+    border-color: #ffffff;
+    color: #050505;
+  }
+  .chip-sukses {
+    background: rgba(74, 222, 128, 0.1);
+    border-color: rgba(74, 222, 128, 0.25);
+    color: #86efac;
+  }
+  .chip-galat {
+    background: rgba(248, 113, 113, 0.1);
+    border-color: rgba(248, 113, 113, 0.25);
+    color: #fca5a5;
+  }
+  .chip-peringatan {
+    background: rgba(250, 204, 21, 0.1);
+    border-color: rgba(250, 204, 21, 0.25);
+    color: #fde047;
+  }
+
+  /* Tombol: pill */
+  .tombol {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    gap: 0.5rem;
+    min-height: 44px;
+    padding: 10px 24px;
+    border-radius: 9999px;
+    font-size: 14px;
+    font-weight: 500;
+    line-height: 1.2;
+    cursor: pointer;
+    border: 1px solid transparent;
+    text-decoration: none;
+  }
+  .tombol:disabled {
+    opacity: 0.4;
+    cursor: not-allowed;
+  }
+  .tombol-utama {
+    background: #ffffff;
+    color: #050505;
+  }
+  .tombol-sekunder {
+    background: transparent;
+    color: var(--teks);
+    border-color: #3f3f46;
+  }
+  .tombol-ghost {
+    background: transparent;
+    color: var(--teks-2);
+  }
+  .tombol-sm {
+    min-height: 34px;
+    padding: 6px 16px;
+    font-size: 13px;
+  }
+  .tombol-aktif {
+    background: #ffffff;
+    color: #050505;
+    border-color: #ffffff;
+  }
+
+  /* Input: kontrol 8px */
+  .input {
+    width: 100%;
+    min-height: 44px;
+    padding: 10px 14px;
+    border-radius: 8px;
+    border: 1px solid var(--border);
+    background: var(--surface);
+    color: var(--teks);
+    font-size: 14px;
+    font-weight: 500;
+  }
+  .input::placeholder {
+    color: #71717a;
+  }
+  .input:focus {
+    outline: none;
+    border-color: #ffffff;
+    box-shadow: 0 0 0 3px rgba(255, 255, 255, 0.12);
+  }
+  .input:disabled {
+    opacity: 0.5;
+  }
+  .label {
+    display: block;
+    margin-bottom: 6px;
+    font-size: 14px;
+    font-weight: 500;
+  }
+  .bantuan {
+    margin-top: 4px;
+    font-size: 12px;
+    color: var(--teks-2);
+  }
+
+  /* Tabel data */
+  .tabel {
+    width: 100%;
+    border-collapse: collapse;
+    font-size: 14px;
+  }
+  .tabel th {
+    padding: 12px 16px;
+    text-align: left;
+    font-family: var(--font-mono);
+    font-size: 11px;
+    font-weight: 600;
+    letter-spacing: 0.08em;
+    text-transform: uppercase;
+    color: var(--teks-2);
+    border-bottom: 1px solid var(--border);
+    white-space: nowrap;
+  }
+  .tabel td {
+    padding: 12px 16px;
+    border-bottom: 1px solid #1c1c1f;
+    white-space: nowrap;
+  }
+  .tabel tbody tr:last-child td,
+  .tabel tbody tr:last-child th {
+    border-bottom: 0;
+  }
+  .tabel .kanan {
+    text-align: right;
+  }
+
+  /* Tooltip istilah (muncul lewat GSAP) */
+  .istilah {
+    position: relative;
+    display: inline;
+    text-decoration: underline dotted var(--teks-2);
+    text-underline-offset: 4px;
+    cursor: help;
+  }
+  a.istilah {
+    cursor: pointer;
+    text-decoration-style: solid;
+    text-decoration-color: #52525b;
+  }
+  .istilah-tip {
+    position: absolute;
+    z-index: 40;
+    left: 50%;
+    bottom: calc(100% + 10px);
+    width: max-content;
+    max-width: 240px;
+    padding: 8px 12px;
+    border-radius: 8px;
+    background: #f4f4f4;
+    color: #050505;
+    font-family: var(--font-sans);
+    font-size: 12px;
+    font-weight: 500;
+    line-height: 1.5;
+    text-transform: none;
+    letter-spacing: 0;
+    text-align: left;
+    white-space: normal;
+    box-shadow: 0 8px 32px rgba(0, 0, 0, 0.6);
+    visibility: hidden;
+    opacity: 0;
+    pointer-events: none;
+  }
+
+  /* Detail saham: grafik melebar di Mode Pro */
+  .kolom-grafik {
+    grid-column: span 12 / span 12;
+  }
+}
+
+html:not([data-mode="pro"]) .kolom-grafik {
+  grid-column: span 12 / span 12;
+}
+@media (min-width: 1024px) {
+  html:not([data-mode="pro"]) .kolom-grafik {
+    grid-column: span 7 / span 7;
+  }
+}
+
+.sr-only-x {
+  position: absolute;
+  width: 1px;
+  height: 1px;
+  overflow: hidden;
+  clip: rect(0 0 0 0);
+  white-space: nowrap;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  * {
+    transition: none !important;
+    animation: none !important;
+  }
 }

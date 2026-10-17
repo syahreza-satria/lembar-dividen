@@ -1,0 +1,28 @@
+name: Perbarui data saham
+
+on:
+  schedule:
+    # 09.30 UTC = 16.30 WIB, Senin-Jumat (pada hari libur bursa data tidak berubah)
+    - cron: "30 9 * * 1-5"
+  workflow_dispatch:
+
+permissions:
+  contents: write
+
+jobs:
+  fetch:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
+          cache: npm
+      - run: npm ci
+      - run: npx tsx scripts/fetch-saham.ts
+      - name: Commit data
+        run: |
+          git config user.name "lembar-dividen-bot"
+          git config user.email "bot@users.noreply.github.com"
+          git add data/saham.json
+          git diff --staged --quiet || (git commit -m "data: pembaruan harian" && git push)
