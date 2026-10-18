@@ -135,5 +135,12 @@ export function buatYahoo(): SumberData {
     async ambilIndeks() {
       return (await ambilChart("^JKSE", "2y")).harga;
     },
+    async ambilKurs() {
+      // Bar Sabtu/Minggu hanyalah kuotasi datar saat pasar valas tutup; dibuang.
+      return (await ambilChart("IDR=X", "1y")).harga.filter((c) => {
+        const hari = new Date(`${c.t}T00:00:00Z`).getUTCDay();
+        return hari !== 0 && hari !== 6;
+      });
+    },
   };
 }

@@ -28,7 +28,7 @@ export function Sparkline({
   const naik = data[data.length - 1] >= data[0];
   const warna = terang ? (naik ? "#15803d" : "#b91c1c") : naik ? "#4ade80" : "#f87171";
   return (
-    <svg viewBox={`0 0 ${lebar} ${tinggi}`} role="img" aria-label={label} preserveAspectRatio="none" className="h-24 w-full">
+    <svg viewBox={`0 0 ${lebar} ${tinggi}`} role="img" aria-label={label} preserveAspectRatio="none" style={{ height: tinggi }} className="w-full">
       <path d={area} fill={warna} opacity="0.12" />
       <path d={garis} fill="none" stroke={warna} strokeWidth="2" vectorEffect="non-scaling-stroke" strokeLinejoin="round" />
     </svg>

@@ -2,14 +2,14 @@
 
 import { usePathname } from "next/navigation";
 import { useEffect, useRef } from "react";
-import { animasiMasuk, gsap, ScrollTrigger, useGSAP } from "@/lib/animasi";
+import { animasiMasuk, gsap, jendelaMasuk, ScrollTrigger, useGSAP } from "@/lib/animasi";
 import { PERISTIWA_MODE } from "@/lib/mode";
 
 /**
  * Semua gerak situs ada di sini (GSAP):
  * - hover, tekan, fokus, dan tooltip lewat event delegation (kelas penanda: tombol, chip, kartu, gh-*),
  * - masuk halaman: label, judul bertopeng (masked reveal), blok dengan stagger dan scroll-trigger,
- * - gerak ambient pelan pada lapisan latar.
+ * - cahaya latar dibiarkan statis (animasi layer besar terbukti memberatkan).
  * CSS tidak punya transisi; status akhir hover didefinisikan di tabel ATURAN.
  */
 
@@ -17,20 +17,16 @@ type Aturan = { sel: string; ke: Record<string, string>; angkat?: number };
 
 const PUTIH = "rgba(255,255,255,";
 const ATURAN: Aturan[] = [
-  { sel: ".tombol-utama", ke: { backgroundColor: "rgba(228,228,231,1)" }, angkat: -2 },
-  { sel: ".tombol-sekunder", ke: { backgroundColor: `${PUTIH}0.08)`, borderColor: `${PUTIH}0.7)` }, angkat: -2 },
+  { sel: ".tombol-utama", ke: { backgroundColor: "rgba(228,228,231,1)" }, angkat: -1 },
+  { sel: ".tombol-sekunder", ke: { backgroundColor: `${PUTIH}0.08)`, borderColor: `${PUTIH}0.7)` }, angkat: -1 },
   { sel: ".tombol-ghost", ke: { backgroundColor: `${PUTIH}0.08)`, color: "rgb(255,255,255)" }, angkat: -1 },
-  { sel: ".tombol-aktif", ke: { backgroundColor: "rgba(228,228,231,1)" }, angkat: -2 },
+  { sel: ".tombol-aktif", ke: { backgroundColor: "rgba(228,228,231,1)" }, angkat: -1 },
   { sel: "a.chip, button.chip:not(.chip-aktif)", ke: { backgroundColor: `${PUTIH}0.08)`, borderColor: `${PUTIH}0.5)` }, angkat: -1 },
   { sel: "button.chip.chip-aktif", ke: {}, angkat: -1 },
   { sel: ".gh-bg", ke: { backgroundColor: `${PUTIH}0.05)` } },
   { sel: ".gh-teks", ke: { color: "rgb(255,255,255)" } },
   { sel: ".gh-nav", ke: { backgroundColor: `${PUTIH}0.08)`, color: "rgb(255,255,255)" } },
-  {
-    sel: ".gh-kartu",
-    ke: { backgroundColor: "rgba(24,24,27,1)", borderColor: "rgba(82,82,91,1)", boxShadow: "0 18px 48px 0 rgba(0,0,0,0.55)" },
-    angkat: -4,
-  },
+  { sel: ".gh-kartu", ke: { borderColor: "rgba(82,82,91,1)" }, angkat: -2 },
   { sel: ".tabel tbody tr", ke: { backgroundColor: `${PUTIH}0.03)` } },
   { sel: ".input:not(:disabled):not(:focus)", ke: { borderColor: "rgba(82,82,91,1)" } },
 ];
@@ -48,6 +44,18 @@ const KEBAB: Record<string, string> = {
 
 type Keadaan = { hover: boolean; tekan: boolean; istirahat: Record<string, string>; kunci: string[] };
 const keadaan = new WeakMap<Element, Keadaan>();
+const aktifSet = new Set<HTMLElement>();
+
+/** Mengembalikan semua elemen ke keadaan istirahat seketika (tanpa menunggu tween keluar-hover selesai). */
+function resetSemua() {
+  aktifSet.forEach((el) => {
+    const s = keadaan.get(el);
+    gsap.killTweensOf(el);
+    gsap.set(el, { clearProps: [...(s?.kunci ?? []), "transform"].join(",") });
+    keadaan.delete(el);
+  });
+  aktifSet.clear();
+}
 
 const alfaNol = (c: string) => c.replace(/rgba?\(([^)]*)\)/, (_, i: string) => `rgba(${i.split(",").slice(0, 3).join(",")},0)`);
 
@@ -66,16 +74,17 @@ function terapkan(el: HTMLElement, kurangi: boolean) {
   const s = keadaan.get(el);
   if (!s) return;
   const { ke, angkat } = gabung(el);
-  const vars: gsap.TweenVars = { duration: kurangi ? 0 : s.hover || s.tekan ? 0.3 : 0.5, ease: "power3.out", overwrite: "auto" };
+  const vars: gsap.TweenVars = { duration: kurangi ? 0 : s.hover || s.tekan ? 0.22 : 0.32, ease: "power3.out", overwrite: "auto" };
   for (const k of s.kunci) vars[k] = s.hover ? ke[k] : s.istirahat[k];
   if (!kurangi) {
     vars.y = s.hover ? angkat : 0;
-    vars.scale = s.tekan ? 0.97 : 1;
+    vars.scale = s.tekan ? 0.98 : 1;
   }
   vars.onComplete = () => {
     if (!s.hover && !s.tekan) {
       gsap.set(el, { clearProps: [...s.kunci, "transform"].join(",") });
       keadaan.delete(el);
+      aktifSet.delete(el);
     }
   };
   gsap.to(el, vars);
@@ -96,6 +105,7 @@ function mulai(el: HTMLElement) {
     }
     s = { hover: false, tekan: false, istirahat, kunci };
     keadaan.set(el, s);
+    aktifSet.add(el);
   }
   return s;
 }
@@ -131,35 +141,44 @@ function masukHalaman(awal: boolean) {
   const blok = Array.from(root.querySelectorAll<HTMLElement>(":scope > * > *:not([data-kepala])")).filter(tampak);
   const header = awal ? Array.from(document.querySelectorAll<HTMLElement>("header.situs [data-masuk]")) : [];
 
+  jendelaMasuk.sampai = performance.now() + 1700;
+
   const tl = gsap.timeline({ defaults: { ease: "power3.out" } });
   if (header.length) {
-    tl.fromTo(header, { autoAlpha: 0, y: -14 }, { autoAlpha: 1, y: 0, duration: 0.8, stagger: 0.07, clearProps: "opacity,visibility,transform" }, 0);
+    tl.fromTo(header, { autoAlpha: 0, y: -10 }, { autoAlpha: 1, y: 0, duration: 0.6, stagger: 0.05, clearProps: "opacity,visibility,transform" }, 0);
   }
   if (label.length) {
-    tl.fromTo(label, { autoAlpha: 0, y: 10 }, { autoAlpha: 1, y: 0, duration: 0.7, stagger: 0.05, clearProps: "opacity,visibility,transform" }, 0.1);
+    tl.fromTo(label, { autoAlpha: 0, y: 8 }, { autoAlpha: 1, y: 0, duration: 0.5, stagger: 0.04, clearProps: "opacity,visibility,transform" }, 0.05);
   }
   if (reveal.length) {
-    tl.fromTo(reveal, { yPercent: 110 }, { yPercent: 0, duration: 1.1, ease: "expo.out", stagger: 0.12, clearProps: "transform" }, 0.15);
+    tl.fromTo(reveal, { yPercent: 105 }, { yPercent: 0, duration: 0.9, ease: "expo.out", stagger: 0.1, clearProps: "transform" }, 0.1);
   }
   if (masuk.length) {
-    tl.fromTo(masuk, { autoAlpha: 0, y: 16 }, { autoAlpha: 1, y: 0, duration: 0.8, stagger: 0.08, clearProps: "opacity,visibility,transform" }, 0.5);
+    tl.fromTo(masuk, { autoAlpha: 0, y: 12 }, { autoAlpha: 1, y: 0, duration: 0.6, stagger: 0.06, clearProps: "opacity,visibility,transform" }, 0.35);
   }
 
-  // Blok: yang sudah terlihat masuk berurutan; sisanya muncul saat discroll.
+  // Blok: yang sudah terlihat masuk berurutan (maks. 6 agar tidak banyak layer serentak); sisanya muncul saat discroll.
   let urutan = 0;
-  blok.slice(0, 14).forEach((el) => {
-    const terlihat = el.getBoundingClientRect().top < window.innerHeight * 0.9;
+  // Semua pembacaan layout dikumpulkan dulu; menulis style di antara pembacaan memaksa layout berulang.
+  const batas = window.innerHeight * 0.9;
+  const posisi = blok.slice(0, 12).map((el) => ({ el, terlihat: el.getBoundingClientRect().top < batas }));
+  posisi.forEach(({ el, terlihat }) => {
+    const bisaAnimasi = !terlihat || urutan < 6;
+    if (!bisaAnimasi) {
+      gsap.set(el, { clearProps: "opacity,visibility,transform" });
+      return;
+    }
     gsap.fromTo(
       el,
-      { autoAlpha: 0, y: 28 },
+      { autoAlpha: 0, y: 18 },
       {
         autoAlpha: 1,
         y: 0,
-        duration: 0.9,
+        duration: 0.7,
         ease: "power3.out",
-        delay: terlihat ? 0.35 + urutan++ * 0.09 : 0,
+        delay: terlihat ? 0.25 + urutan++ * 0.07 : 0,
         clearProps: "opacity,visibility,transform",
-        scrollTrigger: terlihat ? undefined : { trigger: el, start: "top 90%", once: true },
+        scrollTrigger: terlihat ? undefined : { trigger: el, start: "top 92%", once: true },
       },
     );
   });
@@ -171,7 +190,7 @@ export function EfekGlobal() {
   const path = usePathname();
   const pertama = useRef(true);
 
-  // Hover, tekan, fokus, tooltip, ambient.
+  // Hover, tekan, fokus, tooltip.
   useEffect(() => {
     const mm = gsap.matchMedia();
     mm.add({ normal: "(prefers-reduced-motion: no-preference)", kurangi: "(prefers-reduced-motion: reduce)" }, (ctx) => {
@@ -247,6 +266,10 @@ export function EfekGlobal() {
         }
       };
 
+      const sembunyi = () => document.visibilityState === "hidden" && resetSemua();
+      document.documentElement.addEventListener("pointerleave", resetSemua);
+      window.addEventListener("blur", resetSemua);
+      document.addEventListener("visibilitychange", sembunyi);
       document.addEventListener("pointerover", masuk);
       document.addEventListener("pointerout", keluar);
       document.addEventListener("pointerdown", tekan);
@@ -255,13 +278,11 @@ export function EfekGlobal() {
       document.addEventListener("focusin", fokusMasuk);
       document.addEventListener("focusout", fokusKeluar);
 
-      // Ambient: cahaya latar bergeser sangat pelan (hanya saat gerak tidak dikurangi).
-      const orb = kurangi ? [] : gsap.utils.toArray<HTMLElement>("[data-orb]");
-      orb.forEach((o, i) => {
-        gsap.to(o, { x: i ? -90 : 110, y: i ? 70 : 60, duration: 22 + i * 6, ease: "sine.inOut", repeat: -1, yoyo: true });
-      });
-
       return () => {
+        document.documentElement.removeEventListener("pointerleave", resetSemua);
+        window.removeEventListener("blur", resetSemua);
+        document.removeEventListener("visibilitychange", sembunyi);
+        resetSemua();
         document.removeEventListener("pointerover", masuk);
         document.removeEventListener("pointerout", keluar);
         document.removeEventListener("pointerdown", tekan);
@@ -278,6 +299,7 @@ export function EfekGlobal() {
   useGSAP(
     () => {
       const mm = gsap.matchMedia();
+      resetSemua();
       mm.add("(prefers-reduced-motion: no-preference)", () => {
         masukHalaman(pertama.current);
         pertama.current = false;
@@ -293,21 +315,28 @@ export function EfekGlobal() {
 
   // Pergantian Mode Pemula/Pro: konten yang tampil masuk kembali.
   useEffect(() => {
+    let t: ReturnType<typeof setTimeout> | undefined;
     const saat = () => {
-      requestAnimationFrame(() => {
+      clearTimeout(t);
+      // Tunggu render konten baru selesai supaya animasi tidak berebut frame dengan React.
+      t = setTimeout(() => {
         const root = document.getElementById("isi");
         if (!root) return;
         const reveal = Array.from(root.querySelectorAll<HTMLElement>("[data-reveal]")).filter(tampak);
-        const blok = Array.from(root.querySelectorAll<HTMLElement>(":scope > * > *:not([data-kepala])")).filter(tampak).slice(0, 10);
+        const blok = Array.from(root.querySelectorAll<HTMLElement>(":scope > * > *:not([data-kepala])")).filter(tampak).slice(0, 6);
+        jendelaMasuk.sampai = performance.now() + 900;
         if (reveal.length && !window.matchMedia("(prefers-reduced-motion: reduce)").matches) {
-          gsap.fromTo(reveal, { yPercent: 110 }, { yPercent: 0, duration: 0.9, ease: "expo.out", stagger: 0.1, clearProps: "transform" });
+          gsap.fromTo(reveal, { yPercent: 105 }, { yPercent: 0, duration: 0.7, ease: "expo.out", stagger: 0.08, clearProps: "transform" });
         }
-        animasiMasuk(blok, { y: 18, duration: 0.6, stagger: 0.06 });
+        animasiMasuk(blok, { y: 10, duration: 0.45, stagger: 0.04 });
         animasiBar();
-      });
+      }, 90);
     };
     window.addEventListener(PERISTIWA_MODE, saat);
-    return () => window.removeEventListener(PERISTIWA_MODE, saat);
+    return () => {
+      clearTimeout(t);
+      window.removeEventListener(PERISTIWA_MODE, saat);
+    };
   }, []);
 
   return null;
@@ -321,7 +350,7 @@ function animasiBar() {
     gsap.fromTo(
       b,
       { scaleX: 0, transformOrigin: b.dataset.bar === "kiri" ? "left center" : "right center" },
-      { scaleX: 1, duration: 1.1, delay: 0.7 + i * 0.05, ease: "expo.out", clearProps: "transform", overwrite: "auto" },
+      { scaleX: 1, duration: 0.9, delay: 0.55 + i * 0.04, ease: "expo.out", clearProps: "transform", overwrite: "auto" },
     );
   });
 }

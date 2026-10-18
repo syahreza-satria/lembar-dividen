@@ -12,4 +12,6 @@ export interface SumberData {
   nama: string;
   ambilEmiten(kode: string): Promise<HasilEmiten>;
   ambilIndeks(): Promise<Candle[]>;
+  /** kurs USD/IDR */
+  ambilKurs(): Promise<Candle[]>;
 }

@@ -1,6 +1,7 @@
 import Link from "next/link";
 import { infoPembaruan, tanggalAcuan } from "@/lib/data";
 import { tanggal, waktuWib } from "@/lib/format";
+import { StatusPasar } from "@/components/shared/StatusPasar";
 import { DISCLAIMER } from "@/lib/konten";
 
 export function Footer() {
@@ -14,10 +15,10 @@ export function Footer() {
         </div>
         <div className="space-y-4">
           <p className="label-mono">Data</p>
+          <StatusPasar />
           <p>
-            Harga tutup <span className="text-teks">{tanggal(tanggalAcuan())}</span>
-            <br />
-            Diperbarui {waktuWib(info.diperbarui)}
+            Kuotasi tertunda dari sumber. Grafik, indikator, dan fundamental memakai penutupan{" "}
+            <span className="text-teks">{tanggal(tanggalAcuan())}</span> (diperbarui {waktuWib(info.diperbarui)}).
           </p>
           <p>Sumber: {info.sumber}</p>
         </div>

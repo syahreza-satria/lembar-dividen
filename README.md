@@ -20,6 +20,10 @@ node scripts/buat-ikon.mjs           # buat ulang ikon PWA
 - `data/saham.json` hasil pipeline harian (`.github/workflows/fetch-saham.yml`, 16.30 WIB). Menyimpan 260 hari harga per saham.
 - Mode Pemula/Pro: atribut `data-mode` di `<html>`, diset skrip inline sebelum hydration; kelas `.hanya-pemula` / `.hanya-pro`.
 
+## Data live
+
+`/api/kuotasi` mengambil kuotasi near-real-time (semua saham + IHSG + kurs) dari Yahoo dalam satu panggilan batch, cache 15 detik di server. Klien (`lib/live.ts`) polling tiap 20 detik saat bursa buka, 5 menit saat tutup, dan hanya saat tab terlihat. Bila gagal, UI kembali ke data penutupan. Sumber melaporkan penundaan ±10 menit untuk saham IDX; data tanpa jeda memerlukan lisensi bursa. Grafik, indikator, dan fundamental tetap dari data penutupan harian.
+
 ## Aturan konten
 
 Semua teks bersifat deskriptif. Tidak boleh ada rekomendasi beli/jual, target harga, atau label sinyal.

@@ -1,59 +1,30 @@
 import Link from "next/link";
 import { Istilah } from "@/components/shared/Istilah";
-import { Perubahan } from "@/components/shared/Perubahan";
+import { HargaLive, PerubahanLive } from "@/components/shared/HargaLive";
+import { JudulKartu as Judul } from "@/components/shared/JudulKartu";
+import { DaftarPerforma, SektorLive } from "@/components/shared/PasarLive";
+import { StatusPasar } from "@/components/shared/StatusPasar";
 import { Sparkline } from "@/components/shared/Sparkline";
-import { dataIhsg, semuaDividen, semuaRingkas, statSektor, tanggalAcuan, type RingkasSaham } from "@/lib/data";
-import { angka, persen, rupiah, tanggal } from "@/lib/format";
+import { dataIhsg, dataKurs, semuaDividen, semuaRingkas, tanggalAcuan } from "@/lib/data";
+import { persen, rupiah, tanggal } from "@/lib/format";
 import { KONDISI } from "@/lib/kondisi";
-
-function Judul({ nomor, children, id }: { nomor: string; children: React.ReactNode; id: string }) {
-  return (
-    <div className="flex items-baseline justify-between gap-3 border-b border-garis px-5 py-4">
-      <h2 id={id} className="text-lg font-medium">
-        {children}
-      </h2>
-      <span className="label-mono !text-[10px]">{nomor}</span>
-    </div>
-  );
-}
-
-function DaftarSaham({ judul, id, nomor, data, className }: { judul: string; id: string; nomor: string; data: RingkasSaham[]; className: string }) {
-  return (
-    <section aria-labelledby={id} className={`kartu overflow-hidden ${className}`}>
-      <Judul id={id} nomor={nomor}>{judul}</Judul>
-      <ol>
-        {data.map((s) => (
-          <li key={s.kode} className="border-b border-garis last:border-0">
-            <Link href={`/saham/${s.kode}`} className="gh-bg flex min-h-14 items-center gap-3 px-5 py-2">
-              <span className="angka w-12 font-semibold">{s.kode}</span>
-              <span className="min-w-0 flex-1 truncate text-sm text-teks-2">{s.nama}</span>
-              <span className="angka hidden text-sm sm:inline">{angka(s.harga)}</span>
-              <Perubahan nilai={s.perubahanPersen} className="w-24 justify-end text-sm" />
-            </Link>
-          </li>
-        ))}
-      </ol>
-    </section>
-  );
-}
 
 export default function Beranda() {
   const semua = semuaRingkas();
-  const urut = [...semua].filter((s) => s.perubahanPersen !== null).sort((a, b) => (b.perubahanPersen ?? 0) - (a.perubahanPersen ?? 0));
-  const gainer = urut.slice(0, 5);
-  const loser = urut.slice(-5).reverse();
+  const dataPasar = semua.map((s) => ({ kode: s.kode, nama: s.nama, sektor: s.sektor, harga: s.harga, persen: s.perubahanPersen }));
   const ihsg = dataIhsg();
-  const sektor = [...statSektor()].filter((s) => s.perubahanRata !== null).sort((a, b) => (b.perubahanRata ?? 0) - (a.perubahanRata ?? 0));
-  const maks = Math.max(...sektor.map((s) => Math.abs(s.perubahanRata ?? 0)), 0.01);
+  const kurs = dataKurs();
   const acuan = tanggalAcuan();
-  const dividenMendatang = semuaDividen().filter((d) => d.ex >= acuan).slice(0, 6);
+  const semuaDiv = semuaDividen();
+  const mendatang = semuaDiv.filter((d) => d.ex >= acuan);
+  const dividenMendatang = mendatang.length ? mendatang.slice(0, 6) : semuaDiv.filter((d) => d.ex < acuan).slice(-6).reverse();
   const sorotan = (["golden_cross", "rsi_rendah", "volume_tinggi"] as const).map((k) => ({
     k,
     kode: semua.filter((s) => s.kondisi.includes(k)).map((s) => s.kode),
   }));
 
   return (
-    <div className="space-y-16 lg:space-y-20">
+    <div className="space-y-12 lg:space-y-14">
       {/* Hero */}
       <section data-kepala className="hanya-pemula">
         <div>
@@ -88,48 +59,44 @@ export default function Beranda() {
       <div className="grid gap-4 lg:grid-cols-12">
         {ihsg && (
           <section aria-labelledby="ihsg" className="kartu-terang p-6 lg:col-span-7 lg:p-8">
-            <h2 id="ihsg" className="label-mono">
-              <Istilah k="ihsg">IHSG</Istilah> {"//"} {tanggal(ihsg.terakhir.t)}
-            </h2>
+            <div className="flex flex-wrap items-center justify-between gap-2">
+              <h2 id="ihsg" className="label-mono">
+                <Istilah k="ihsg">IHSG</Istilah>
+              </h2>
+              <StatusPasar />
+            </div>
             <p className="mt-6 flex flex-wrap items-baseline gap-x-4 gap-y-1">
-              <span className="angka text-[clamp(2.25rem,5vw,3.5rem)] font-medium leading-none">{angka(ihsg.terakhir.c, 2)}</span>
-              <Perubahan nilai={ihsg.persen} className="text-lg" />
+              <HargaLive kode="IHSG" fallback={ihsg.terakhir.c} desimal={2} className="angka text-[clamp(2.25rem,5vw,3.5rem)] font-medium leading-none" />
+              <PerubahanLive kode="IHSG" fallback={ihsg.persen} className="text-lg" />
             </p>
             <div className="mt-8">
               <Sparkline data={ihsg.harga.slice(-90).map((h) => h.c)} label="Pergerakan IHSG 90 hari terakhir" terang />
               <p className="label-mono mt-2 !text-[10px]">90 hari bursa terakhir</p>
             </div>
+            {kurs && (
+              <div className="mt-6 flex flex-wrap items-end justify-between gap-x-6 gap-y-3 border-t border-garis pt-6">
+                <div>
+                  <h3 className="label-mono">Kurs USD/IDR</h3>
+                  <p className="mt-3 flex flex-wrap items-baseline gap-x-4 gap-y-1">
+                    <HargaLive kode="USDIDR" fallback={kurs.terakhir.c} awalan="Rp " className="angka text-[clamp(1.5rem,3vw,2rem)] font-medium leading-none" />
+                    <PerubahanLive kode="USDIDR" fallback={kurs.persen} />
+                  </p>
+                </div>
+                <div className="w-40 sm:w-56">
+                  <Sparkline data={kurs.harga.slice(-90).map((h) => h.c)} label="Pergerakan kurs USD/IDR 90 hari terakhir" tinggi={48} terang />
+                </div>
+              </div>
+            )}
           </section>
         )}
 
-        <section aria-labelledby="sektor" className="kartu overflow-hidden lg:col-span-5">
-          <Judul id="sektor" nomor="02-A">Sektor hari ini</Judul>
-          <ul className="space-y-3 p-5">
-            {sektor.map((s) => {
-              const v = s.perubahanRata ?? 0;
-              return (
-                <li key={s.sektor} className="grid grid-cols-[minmax(0,8rem)_1fr_auto] items-center gap-3 text-sm sm:grid-cols-[10rem_1fr_auto]">
-                  <span className="truncate text-teks-2">{s.sektor}</span>
-                  <span className="relative h-1.5 rounded-full bg-surface-3" aria-hidden>
-                    <span className="absolute inset-y-0 left-1/2 w-px bg-garis-kuat" />
-                    <span
-                      data-bar={v >= 0 ? "kiri" : "kanan"}
-                      className={`absolute inset-y-0 rounded-full ${v >= 0 ? "bg-naik" : "bg-turun"}`}
-                      style={v >= 0 ? { left: "50%", width: `${(v / maks) * 50}%` } : { right: "50%", width: `${(-v / maks) * 50}%` }}
-                    />
-                  </span>
-                  <Perubahan nilai={s.perubahanRata} className="w-24 justify-end" />
-                </li>
-              );
-            })}
-          </ul>
-        </section>
+        <SektorLive data={dataPasar} className="lg:col-span-5" />
 
-        <DaftarSaham judul="Naik terbanyak" id="gainer" nomor="03-B" data={gainer} className="lg:col-span-4" />
-        <DaftarSaham judul="Turun terbanyak" id="loser" nomor="03-C" data={loser} className="lg:col-span-4" />
+        <DaftarPerforma judul="Performa terbaik" id="gainer" nomor="03-B" mode="terbaik" data={dataPasar} className="lg:col-span-4" />
+        <DaftarPerforma judul="Performa terburuk" id="loser" nomor="03-C" mode="terburuk" data={dataPasar} className="lg:col-span-4" />
 
         <section aria-labelledby="dividen-dekat" className="kartu overflow-hidden lg:col-span-4">
-          <Judul id="dividen-dekat" nomor="04-D">Dividen berikutnya</Judul>
+          <Judul id="dividen-dekat" nomor="04-D">{mendatang.length ? "Dividen berikutnya" : "Dividen terakhir"}</Judul>
           {dividenMendatang.length === 0 ? (
             <p className="p-5 text-sm text-teks-2">Belum ada ex date setelah {tanggal(acuan)}.</p>
           ) : (

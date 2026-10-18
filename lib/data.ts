@@ -156,6 +156,13 @@ export function dataIhsg() {
   return { harga: h, terakhir: h[h.length - 1], perubahan, persen };
 }
 
+export function dataKurs() {
+  const h = muatBerkas().kurs?.harga ?? null;
+  if (!h || h.length < 2) return null;
+  const { perubahan, persen } = perubahanHarian(h);
+  return { harga: h, terakhir: h[h.length - 1], perubahan, persen };
+}
+
 export type ItemDividen = Dividen & { kode: string; nama: string; harga: number; yieldPersen: number };
 
 /** Semua dividen (riwayat 12 bulan ke belakang dan yang akan datang) terurut berdasar ex date. */

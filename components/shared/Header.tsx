@@ -8,7 +8,7 @@ import { ToggleMode } from "./ToggleMode";
 export function Header() {
   const daftar = semuaRingkas().map((s) => ({ kode: s.kode, nama: s.nama, sektor: s.sektor }));
   return (
-    <header className="situs sticky top-0 z-30 border-b border-garis bg-bg/80 backdrop-blur-md">
+    <header className="situs sticky top-0 z-30 border-b border-garis bg-bg/95">
       <div className="flex flex-wrap items-center gap-x-6 gap-y-3 px-5 py-3 sm:px-8 lg:flex-nowrap lg:px-12">
         <Link href="/" data-masuk className="order-1 flex shrink-0 items-baseline gap-2">
           <span className="text-[17px] font-semibold uppercase tracking-[0.04em]">Lembar Dividen</span>

@@ -1,12 +1,14 @@
 import type { Metadata } from "next";
 import Link from "next/link";
 import { notFound } from "next/navigation";
+import { Suspense } from "react";
 import { KartuFundamental } from "@/components/pemula/KartuFundamental";
 import { RingkasanSaham } from "@/components/pemula/RingkasanSaham";
 import { TabelFundamental, TabelIndikator } from "@/components/pro/TabelFundamental";
 import { GrafikSaham } from "@/components/shared/GrafikSaham";
 import { KondisiTeknikal } from "@/components/shared/KondisiTeknikal";
-import { Perubahan } from "@/components/shared/Perubahan";
+import { HargaLive, PerubahanLive, SelisihLive } from "@/components/shared/HargaLive";
+import { StatusPasar } from "@/components/shared/StatusPasar";
 import { TombolWatchlist } from "@/components/shared/TombolWatchlist";
 import {
   cariSaham,
@@ -37,7 +39,24 @@ export async function generateMetadata({ params }: PageProps<"/saham/[kode]">): 
   };
 }
 
-export default async function HalamanSaham({ params }: PageProps<"/saham/[kode]">) {
+
+function Kerangka() {
+  return (
+    <p className="label-mono" role="status">
+      Memuat…
+    </p>
+  );
+}
+
+export default function HalamanSaham({ params }: PageProps<"/saham/[kode]">) {
+  return (
+    <Suspense fallback={<Kerangka />}>
+      <IsiSaham params={params} />
+    </Suspense>
+  );
+}
+
+async function IsiSaham({ params }: { params: Promise<{ kode: string }> }) {
   const { kode } = await params;
   const saham = cariSaham(kode);
   const r = ringkasDari(kode);
@@ -71,16 +90,14 @@ export default async function HalamanSaham({ params }: PageProps<"/saham/[kode]"
             </h1>
             <p className="teks-pengantar mt-1">{r.nama}</p>
             <p className="mt-6 flex flex-wrap items-baseline gap-x-4 gap-y-1">
-              <span className="angka text-[clamp(1.75rem,4vw,2.5rem)] font-medium">{rupiah(r.harga)}</span>
-              <Perubahan nilai={r.perubahanPersen} className="text-lg" />
-              {r.perubahan !== null && (
-                <span className="angka text-sm text-teks-2">
-                  ({r.perubahan > 0 ? "+" : r.perubahan < 0 ? "−" : ""}
-                  {angka(Math.abs(r.perubahan))})
-                </span>
-              )}
+              <HargaLive kode={r.kode} fallback={r.harga} awalan="Rp " className="angka text-[clamp(1.75rem,4vw,2.5rem)] font-medium" />
+              <PerubahanLive kode={r.kode} fallback={r.perubahanPersen} className="text-lg" />
+              <SelisihLive kode={r.kode} fallback={r.perubahan} className="angka text-sm text-teks-2" />
             </p>
-            <p className="label-mono mt-2 !text-[10px]">Harga tutup {tanggal(r.tanggal)}</p>
+            <div className="mt-3 flex flex-wrap items-center gap-x-4 gap-y-2">
+              <StatusPasar />
+              <span className="label-mono !text-[10px]">Grafik dan indikator: penutupan {tanggal(r.tanggal)}</span>
+            </div>
           </div>
           <div className="flex flex-wrap gap-2">
             <TombolWatchlist kode={r.kode} />

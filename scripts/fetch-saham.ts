@@ -74,10 +74,18 @@ async function main() {
     console.warn(`x IHSG: ${(err as Error).message}`);
   }
 
+  let kurs = lama?.kurs ?? null;
+  try {
+    kurs = { harga: (await sumber.ambilKurs()).slice(-260) };
+  } catch (err) {
+    console.warn(`x Kurs: ${(err as Error).message}`);
+  }
+
   const keluaran: BerkasSaham = {
     diperbarui: sekarang,
     sumber: sumber.nama,
     ihsg,
+    kurs,
     saham: hasil.filter((h): h is Hasil => h !== null).map((h) => h.saham),
   };
   writeFileSync(BERKAS, JSON.stringify(keluaran));

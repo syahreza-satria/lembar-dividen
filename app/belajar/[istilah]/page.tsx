@@ -1,6 +1,7 @@
 import type { Metadata } from "next";
 import Link from "next/link";
 import { notFound } from "next/navigation";
+import { Suspense } from "react";
 import { cariIstilah, GLOSARIUM } from "@/lib/glosarium";
 
 export function generateStaticParams() {
@@ -20,7 +21,24 @@ export async function generateMetadata({ params }: PageProps<"/belajar/[istilah]
   };
 }
 
-export default async function HalamanIstilah({ params }: PageProps<"/belajar/[istilah]">) {
+
+function Kerangka() {
+  return (
+    <p className="label-mono" role="status">
+      Memuat…
+    </p>
+  );
+}
+
+export default function HalamanIstilah({ params }: PageProps<"/belajar/[istilah]">) {
+  return (
+    <Suspense fallback={<Kerangka />}>
+      <IsiIstilah params={params} />
+    </Suspense>
+  );
+}
+
+async function IsiIstilah({ params }: { params: Promise<{ istilah: string }> }) {
   const { istilah } = await params;
   const g = cariIstilah(istilah);
   if (!g) notFound();

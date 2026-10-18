@@ -52,6 +52,8 @@ export type BerkasSaham = {
   /** true bila isi berkas hanya data contoh, bukan hasil pipeline */
   contoh?: boolean;
   ihsg: { harga: Candle[] } | null;
+  /** kurs USD/IDR harian; opsional agar berkas lama tetap valid */
+  kurs?: { harga: Candle[] } | null;
   saham: Saham[];
 };
 

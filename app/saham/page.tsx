@@ -1,10 +1,10 @@
 import type { Metadata } from "next";
 import { KepalaHalaman } from "@/components/shared/KepalaHalaman";
 import Link from "next/link";
-import { Perubahan } from "@/components/shared/Perubahan";
+import { HargaLive, PerubahanLive } from "@/components/shared/HargaLive";
 import { TombolWatchlist } from "@/components/shared/TombolWatchlist";
 import { semuaRingkas } from "@/lib/data";
-import { angka, kali, persen } from "@/lib/format";
+import { kali, persen } from "@/lib/format";
 
 export const metadata: Metadata = {
   title: "Daftar saham IDX",
@@ -49,8 +49,8 @@ export default function DaftarSaham() {
                       </Link>
                     </td>
                     <td className="max-w-[18rem] truncate text-teks-2">{s.nama}</td>
-                    <td className="angka kanan">{angka(s.harga)}</td>
-                    <td className="kanan"><Perubahan nilai={s.perubahanPersen} /></td>
+                    <td className="kanan"><HargaLive kode={s.kode} fallback={s.harga} className="angka" /></td>
+                    <td className="kanan"><PerubahanLive kode={s.kode} fallback={s.perubahanPersen} /></td>
                     <td className="angka kanan">{kali(s.fundamental.per, 1)}</td>
                     <td className="angka kanan">{persen(s.fundamental.dy, 1)}</td>
                   </tr>

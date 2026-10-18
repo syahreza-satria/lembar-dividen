@@ -40,7 +40,8 @@ export default function Tentang() {
       <section aria-labelledby="metode">
         <H2>Metode</H2>
         <ul className="list-disc space-y-2 pl-5 text-teks/90">
-          <li>Harga penutupan harian (EOD), bukan real-time.</li>
+          <li>Harga, IHSG, dan kurs: kuotasi near-real-time dari sumber, diperbarui otomatis tiap ±20 detik saat bursa buka. Sumber melaporkan penundaan (±10 menit untuk saham IDX), bukan data tanpa jeda.</li>
+          <li>Grafik, indikator teknikal, dan fundamental dihitung dari data penutupan harian dan tidak berubah selama hari bursa.</li>
           <li>MA20/50/200 = rata-rata sederhana harga tutup. RSI metode Wilder (14). MACD EMA 12/26, sinyal EMA 9.</li>
           <li>Median sektor dihitung dari saham yang tercakup di sini.</li>
           <li>Ringkasan dibuat otomatis dari template, selalu deskriptif.</li>
@@ -52,11 +53,11 @@ export default function Tentang() {
       <section aria-labelledby="sumber">
         <H2>Sumber data</H2>
         <p>
-          Diambil sekali sehari setelah bursa tutup dari <strong>{info.sumber}</strong>. Cakupan saat ini {semuaSaham().length} saham
+          Kuotasi diambil dari <strong>{info.sumber}</strong> lewat server kami (cache 15 detik); data penutupan diambil sekali sehari setelah bursa tutup. Cakupan saat ini {semuaSaham().length} saham
           likuid. Harga terakhir per <strong>{tanggal(tanggalAcuan())}</strong>, berkas data diperbarui {waktuWib(info.diperbarui)}.
         </p>
         <p className="mt-3 text-teks-2">
-          Sumber tidak resmi dan syaratnya membatasi redistribusi. Data bisa tertunda atau keliru; cocokkan dengan sumber resmi. Jika pengambilan data gagal, data valid terakhir tetap tampil dengan tanggalnya.
+          Sumber tidak resmi dan syaratnya membatasi redistribusi. Data bisa tertunda atau keliru; cocokkan dengan sumber resmi. Jika kuotasi gagal diambil, situs kembali menampilkan data penutupan terakhir yang valid beserta tanggalnya.
         </p>
       </section>
 

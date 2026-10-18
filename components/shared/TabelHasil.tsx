@@ -2,12 +2,12 @@
 
 import Link from "next/link";
 import { useMemo, useRef, useState } from "react";
-import { animasiMasuk, useGSAP } from "@/lib/animasi";
+import { masukBerjendela, useGSAP } from "@/lib/animasi";
 import type { RingkasSaham } from "@/lib/data";
 import { angka, kali, persen } from "@/lib/format";
 import { FIELD_MAP, urutkan, type Filter, type KunciField } from "@/lib/screener";
 import { Istilah } from "./Istilah";
-import { Perubahan } from "./Perubahan";
+import { HargaLive, PerubahanLive } from "./HargaLive";
 import { TombolWatchlist } from "./TombolWatchlist";
 
 type Kolom = { kunci: KunciField; tampil: (s: RingkasSaham) => string };
@@ -41,7 +41,7 @@ export function TabelHasil({
   useGSAP(
     () => {
       const baris = wadah.current?.querySelectorAll("tbody tr");
-      if (baris?.length) animasiMasuk(Array.from(baris).slice(0, 14), { y: 8, duration: 0.3, stagger: 0.025 });
+      if (baris?.length) return masukBerjendela(Array.from(baris).slice(0, 12), { y: 6, duration: 0.35, stagger: 0.02 });
     },
     { dependencies: [terurut], scope: wadah },
   );
@@ -93,8 +93,8 @@ export function TabelHasil({
                 </Link>
               </td>
               <td className="hidden max-w-[16rem] truncate text-teks-2 sm:table-cell">{s.nama}</td>
-              <td className="angka kanan">{angka(s.harga)}</td>
-              <td className="kanan"><Perubahan nilai={s.perubahanPersen} /></td>
+              <td className="kanan"><HargaLive kode={s.kode} fallback={s.harga} className="angka" /></td>
+              <td className="kanan"><PerubahanLive kode={s.kode} fallback={s.perubahanPersen} /></td>
               {tampilKolom.map((k) => (
                 <td key={k.kunci} className="angka kanan">{k.tampil(s)}</td>
               ))}

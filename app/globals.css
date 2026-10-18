@@ -109,6 +109,7 @@ html.anim #isi > * > *:not([data-kepala]) {
 
 /* Lapisan ambient di belakang konten: grid tipis + cahaya yang bergerak pelan. */
 .ambient {
+  contain: strict;
   position: fixed;
   inset: 0;
   z-index: 0;
@@ -127,7 +128,6 @@ html.anim #isi > * > *:not([data-kepala]) {
   position: absolute;
   border-radius: 9999px;
   background: radial-gradient(circle, rgba(255, 255, 255, 0.09), rgba(255, 255, 255, 0) 65%);
-  will-change: transform;
 }
 header.situs,
 main,

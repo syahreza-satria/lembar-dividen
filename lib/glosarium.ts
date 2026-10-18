@@ -313,11 +313,12 @@ export const GLOSARIUM: Istilah[] = [
   },
   {
     slug: "eod",
-    istilah: "Data EOD",
+    istilah: "Data EOD dan kuotasi tertunda",
     alias: ["EOD", "end of day"],
-    ringkas: "Data harga akhir hari (end of day), bukan harga real-time.",
+    ringkas: "EOD = harga akhir hari. Kuotasi live di sini tertunda beberapa menit dari bursa.",
     penjelasan: [
-      "Lembar Dividen memakai harga penutupan hari bursa terakhir, diperbarui sekali sehari setelah bursa tutup. Karena itu harga yang tampil bukan harga real-time dan bisa berbeda dari yang kamu lihat di aplikasi sekuritas.",
+      "Harga yang tampil diperbarui otomatis saat bursa buka, tetapi sumber datanya melaporkan penundaan (±10 menit untuk saham IDX). Karena itu harga bisa berbeda dari yang kamu lihat di aplikasi sekuritas.",
+      "Grafik, indikator teknikal, dan fundamental memakai data penutupan (end of day, EOD), jadi tidak berubah selama hari bursa berjalan.",
     ],
     terkait: ["ihsg"],
   },
