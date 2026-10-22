@@ -1,6 +1,7 @@
 "use client";
 
-import { formatJamWib, useLive } from "@/lib/live";
+import { tanggal } from "@/lib/format";
+import { formatJamWib, tanggalWib, useLive } from "@/lib/live";
 import { KUNCI_IHSG } from "@/lib/live-tipe";
 
 /** Penanda keadaan data: live (tertunda), pasar tutup, atau hanya data penutupan bila kuotasi gagal. */
@@ -14,14 +15,15 @@ export function StatusPasar({ className = "" }: { className?: string }) {
   if (!data) {
     teks = galat ? "Data penutupan" : "Menyambung…";
   } else {
-    const waktu = data.kuotasi[KUNCI_IHSG]?.t;
+    const t = data.kuotasi[KUNCI_IHSG]?.t;
+    const waktu = t ? `${tanggal(tanggalWib(t))}, ${formatJamWib(t)}` : null;
     if (data.status === "REGULAR") {
-      teks = `Live · tertunda ${data.tundaMenit ?? 10} mnt${waktu ? ` · ${formatJamWib(waktu)}` : ""}`;
+      teks = `Live · tertunda ${data.tundaMenit ?? 10} mnt${waktu ? ` · ${waktu}` : ""}`;
       kelas = "chip-sukses";
       titik = "bg-naik";
       denyut = !galat;
     } else {
-      teks = `Pasar tutup${waktu ? ` · ${formatJamWib(waktu)}` : ""}`;
+      teks = `Pasar tutup${waktu ? ` · ${waktu}` : ""}`;
     }
     if (galat) {
       teks += " · koneksi terputus";

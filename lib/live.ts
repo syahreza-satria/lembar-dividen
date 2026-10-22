@@ -84,3 +84,7 @@ export function useKuotasi(kode: string): Kuotasi | undefined {
 
 const jamWib = new Intl.DateTimeFormat("id-ID", { hour: "2-digit", minute: "2-digit", hour12: false, timeZone: "Asia/Jakarta" });
 export const formatJamWib = (epochDetik: number) => `${jamWib.format(new Date(epochDetik * 1000)).replace(":", ".")} WIB`;
+
+const isoWib = new Intl.DateTimeFormat("en-CA", { timeZone: "Asia/Jakarta" });
+/** Tanggal kuotasi (ISO, zona WIB) dari epoch detik. */
+export const tanggalWib = (epochDetik: number) => isoWib.format(new Date(epochDetik * 1000));
